@@ -11,9 +11,8 @@ COPY . .
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV UVICORN_HOST=0.0.0.0
-ENV UVICORN_PORT=8000
 ENV UVICORN_RELOAD=false
 
-EXPOSE 8000
+EXPOSE 8080
 
-CMD ["uvicorn", "main:app"]
+CMD ["sh", "-c". "uvicorn main:app --host $UVICORN_HOST --port ${PORT:-8080}"]
