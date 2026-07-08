@@ -1,6 +1,7 @@
+import json
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,18 +22,20 @@ class Settings(BaseSettings):
     daily_chat_limit: int = 5
     max_history_messages: int = 8
 
-    # Origins allowed to call the API from the browser (the frontend dev server).
-    cors_origins: list[str] = [
-        "http://localhost:4321",
-        "http://127.0.0.1:4321",
-    ]
+    cors_origins_raw: str = Field(
+        default="http://localhost:4321,http://127.0.0.1:4321",
+        validation_alias="CORS_ORIGINS",
+    )
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def _split_cors_origins(cls, value):
-        if isinstance(value, str) and not value.strip().startswith("["):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
-        return value
+    @property
+    def cors_origins(self) -> list[str]:
+        value = self.cors_origins_raw.strip()
+        if value.startswith("[") and value.endswith("]"):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                value = value[1:-1]
+        return [origin.strip() for origin in value.split(",") if origin.strip()]
 
 
 @lru_cache
